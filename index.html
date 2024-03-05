@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airport Information</title>
+
+  <!-- Adding Bootstrap CSS CDN -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #3c096c, #028090);
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #778da9;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    input {
+      width: 75%;
+      padding: 5px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #airportInfo {
+      margin-top: 20px;
+    }
+
+    h2 {
+      color: black;
+    }
+
+    .alert {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+      color: red;
+    }
+
+    .accordion-button {
+      background-color: lightslategray;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="alert alert-primary" id="alert" role="alert">
+    Get name and website-URL for airports by ICAO code. Covered airports are mostly in Germany.
+  </div>
+  <div class="container">
+    <label for="icaoCode">Enter ICAO Code:</label>
+    <input type="text" id="icaoCode" placeholder="Enter ICAO code">
+
+    <button onclick="getAirportInfo()">Get Airport Info</button>
+
+    <div id="airportInfo"></div>
+
+    <!-- Bootstrap Accordion Section -->
+    <div class="accordion" id="accordionExample">
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
+            aria-expanded="true" aria-controls="collapseOne">
+            EXAMPLE ICAO CODE
+          </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+          <div class="accordion-body">
+            <code>Frankfurt Airport <b>(EDDF)</b></code><br>
+            <code>Munich Airport <b>(EDDM)</b></code><br>
+            <code>Berlin Brandenburg Airport <b>(EDDB)</b></code><br>
+            <code>Hamburg Airport <b>(EDDH)</b></code><br>
+            <code>Düsseldorf Airport <b>(EDDL)</b></code><br>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adding Bootstrap JS Bundle with Popper -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function fetchData(url) {
+      return new Promise((resolve, reject) => {
+        fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
+        }).then(response => {
+          if (response.ok) {
+            resolve(response.json());
+          } else {
+            reject('Error: Unable to fetch data.');
+          }
+        }).catch(error => {
+          reject(error);
+        });
+      });
+    }
+
+    async function getAirportInfo() {
+      const icaoCodeInput = document.getElementById('icaoCode');
+      const airportInfoDiv = document.getElementById('airportInfo');
+
+      const icaoCode = icaoCodeInput.value.trim().toUpperCase();
+      if (!icaoCode) {
+        alert('Please enter a valid ICAO code.');
+        return;
+      }
+
+      const apiUrl = `https://airport-web.appspot.com/_ah/api/airportsapi/v1/airports/${icaoCode}`;
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const name = data.name || 'N/A';
+          const website = data.url || 'N/A';
+
+          airportInfoDiv.innerHTML = `
+            <h2>Airport Information</h2>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Website:</strong> <a href="${website}" target="_blank">${website}</a></p>
+          `;
+
+          // Display the response information
+          airportInfoDiv.innerHTML += `
+            <h2>Response Information</h2>
+            <p><strong>ICAO:</strong> ${data.ICAO}</p>
+            <p><strong>Last Update:</strong> ${data.last_update}</p>
+            <p><strong>URL:</strong> ${data.url}</p>
+            <p><strong>cache-control:</strong> ${response.headers.get('cache-control') || 'N/A'}</p>
+            <p><strong>Content-Encoding:</strong> ${response.headers.get('content-encoding') || 'N/A'}</p>
+            <p><strong>Content-Length:</strong> ${response.headers.get('content-length') || 'N/A'}</p>
+            <p><strong>Content-Type:</strong> ${response.headers.get('content-type') || 'N/A'}</p>
+            <p><strong>Date:</strong> ${response.headers.get('date') || 'N/A'}</p>
+          `;
+        } else {
+          airportInfoDiv.innerHTML = 'Error: Unable to fetch airport data.';
+        }
+      } catch (error) {
+        console.error('Error fetching airport data:', error);
+        airportInfoDiv.innerHTML = 'Error fetching airport data.';
+      }
+    }
+  </script>
+</body>
+
+</html>
